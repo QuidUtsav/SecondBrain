@@ -1,32 +1,18 @@
-from pydantic import BaseModel
-from datetime import date, datetime
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# schemas/entry.py
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-class EntryCreate(BaseModel):
-    raw_text: str
-    entry_date: date | None = None  # optional override, server defaults if absent
+engine = create_engine(DATABASE_URL, echo=False)
 
-class EntryResponse(BaseModel):
-    id: int
-    raw_text: str
-    entry_date: date
-    created_at: datetime
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    class Config:
-        from_attributes = True
+Base = declarative_base()
 
-
-# schemas/query.py
-
-class QueryRequest(BaseModel):
-    query: str
-
-class SourceEntry(BaseModel):
-    id: int
-    raw_text: str
-    entry_date: date
-
-class QueryResponse(BaseModel):
-    answer: str
-    sources: list[SourceEntry]
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
